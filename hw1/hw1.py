@@ -25,7 +25,7 @@ def preprocess(X, y):
     X_normalized = (X - X_avg) / X_var
 
     Y_avg = np.mean(y, axis=0)
-    Y_var = np.sqrt(np.sum((y - Y_avg) ** 2, axis=0) / y.shape[0])
+    Y_var = np.std(y, axis=0)
     y_normalized = (y - Y_avg) / Y_var
 
     return X_normalized, y_normalized
