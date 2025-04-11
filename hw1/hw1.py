@@ -1,6 +1,6 @@
 ###### Your ID ######
-# ID1: 123456789
-# ID2: 987654321
+# ID1: 207253899
+# ID2: 211482559
 #####################
 
 # imports 
@@ -205,6 +205,8 @@ def forward_feature_selection(X_train, y_train, X_val, y_val, best_eta, iteratio
     Returns:
     - selected_features: A list of selected top 5 feature indices
     """
+    if X_train.shape[1] < 5:
+        return list(range(X_train.shape[1]))
     bias_train = np.ones((X_train.shape[0], 1))
     bias_val = np.ones((X_val.shape[0], 1))
 
