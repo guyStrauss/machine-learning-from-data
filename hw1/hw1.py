@@ -179,8 +179,8 @@ def find_best_learning_rate(X_train, y_train, X_val, y_val, iterations):
             3]
     eta_dict = {}  # {eta_value: validation_loss}
     for eta in etas:
-        theta, _ = gradient_descent_stop_condition(X_train, y_train,
-                                                   np.zeros(X_train.shape[1]), eta,
+        theta, _ = gradient_descent(X_train, y_train,
+                                                   np.random.rand(X_train.shape[1]), eta,
                                                    iterations)
         loss = compute_loss(X_val, y_val, theta)
         eta_dict[eta] = loss
@@ -222,7 +222,7 @@ def forward_feature_selection(X_train, y_train, X_val, y_val, best_eta, iteratio
             X_train_curr = np.hstack((bias_train, X_train[:, current_features]))
             X_val_curr = np.hstack((bias_val, X_val[:, current_features]))
 
-            theta_init = np.zeros(X_train_curr.shape[1])
+            theta_init = np.random.rand(X_train_curr.shape[1])
             theta, _ = gradient_descent_stop_condition(X_train_curr, y_train,
                                                        theta_init, best_eta,
                                                        iterations)
