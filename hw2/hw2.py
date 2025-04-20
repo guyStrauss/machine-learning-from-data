@@ -91,6 +91,7 @@ def calc_entropy(data):
     labels = data[:, -1]
     _, counts = np.unique(labels, return_counts=True)
     probabilities = counts / counts.sum()
+    # TODO where=(freq != 0)
     entropy = -np.sum(probabilities * np.log2(probabilities))
     return entropy
 
