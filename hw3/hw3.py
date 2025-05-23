@@ -1,5 +1,9 @@
 import numpy as np
 import math
+###### Your ID ######
+# ID1: 207253899
+# ID2: 211482559
+#####################
 
 def poisson_log_pmf(k, rate):
     """
