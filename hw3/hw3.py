@@ -1,5 +1,5 @@
 import numpy as np
-
+import math
 
 def poisson_log_pmf(k, rate):
     """
@@ -8,10 +8,9 @@ def poisson_log_pmf(k, rate):
 
     return the log pmf value for instance k given the rate
     """
-    factorial_vectorized = np.vectorize(np.math.factorial)
+    factorial_vectorized = np.vectorize(math.factorial)
     const = factorial_vectorized(k)
     return np.log(np.power(rate, k) * np.exp(-rate) / const)
-
 
 
 def possion_analytic_mle(samples):
@@ -20,7 +19,7 @@ def possion_analytic_mle(samples):
 
     return: the rate that maximizes the likelihood
     """
-    return np.sum(samples) / samples.shape[0]
+    return np.mean(samples)
 
 
 def possion_confidence_interval(lambda_mle, n, alpha=0.05):
@@ -33,8 +32,9 @@ def possion_confidence_interval(lambda_mle, n, alpha=0.05):
     """
     # Use norm.ppf to compute the inverse of the normal CDF
     from scipy.stats import norm
-    return lambda_mle + norm.ppf(alpha / 2) * np.sqrt(lambda_mle / n), lambda_mle + norm.ppf(1- alpha / 2) * np.sqrt(
-        lambda_mle / n)
+    z = norm.ppf(1 - alpha / 2)
+    margin = z * np.sqrt(lambda_mle / n)
+    return lambda_mle - margin, lambda_mle + margin
 
 
 def get_poisson_log_likelihoods(samples, rates):
@@ -48,7 +48,7 @@ def get_poisson_log_likelihoods(samples, rates):
     rates = np.asarray(rates)
     term1 = np.sum(samples) * (np.log(rates))
     term2 = - samples.size * rates
-    factorial_vectorized = np.vectorize(np.math.factorial)
+    factorial_vectorized = np.vectorize(math.factorial)
     const = -np.sum(np.log(factorial_vectorized(samples)))
 
     return term1 + term2 + const
@@ -58,41 +58,52 @@ class conditional_independence():
 
     def __init__(self):
         # You need to fill the None value with *valid* probabilities
-        self.X = {0: 0.3, 1: 0.7}  # P(X=x)
-        self.Y = {0: 0.3, 1: 0.7}  # P(Y=y)
-        self.C = {0: 0.5, 1: 0.5}  # P(C=c)
+        self.X = {0: 0.3, 1: 0.7}
+        self.Y = {0: 0.3, 1: 0.7}
+        self.C = {0: 0.5, 1: 0.5}
 
+        # joint X,Y from summing over C
+        #    P(0,0)=0.08+0.02=0.10,  P(0,1)=0.12+0.08=0.20
+        #    P(1,0)=0.12+0.08=0.20,  P(1,1)=0.18+0.32=0.50
         self.X_Y = {
-            (0, 0): None,
-            (0, 1): None,
-            (1, 0): None,
-            (1, 1): None
-        }  # P(X=x, Y=y)
+            (0, 0): 0.10,
+            (0, 1): 0.20,
+            (1, 0): 0.20,
+            (1, 1): 0.50
+        }
 
+        # joint X,C = P(C)*P(X|C)
+        #    P(X=0,C=0)=0.5*0.4=0.20,  P(X=1,C=0)=0.5*0.6=0.30
+        #    P(X=0,C=1)=0.5*0.2=0.10,  P(X=1,C=1)=0.5*0.8=0.40
         self.X_C = {
-            (0, 0): None,
-            (0, 1): None,
-            (1, 0): None,
-            (1, 1): None
-        }  # P(X=x, C=c)
+            (0, 0): 0.20,
+            (1, 0): 0.30,
+            (0, 1): 0.10,
+            (1, 1): 0.40
+        }
 
+        # joint Y,C is identical to X,C in this parametrization
         self.Y_C = {
-            (0, 0): None,
-            (0, 1): None,
-            (1, 0): None,
-            (1, 1): None
-        }  # P(Y=y, C=c)
+            (0, 0): 0.20,
+            (1, 0): 0.30,
+            (0, 1): 0.10,
+            (1, 1): 0.40
+        }
 
+        # full joint via P(X,Y,C)=P(C)P(X|C)P(Y|C)
         self.X_Y_C = {
-            (0, 0, 0): None,
-            (0, 0, 1): None,
-            (0, 1, 0): None,
-            (0, 1, 1): None,
-            (1, 0, 0): None,
-            (1, 0, 1): None,
-            (1, 1, 0): None,
-            (1, 1, 1): None,
-        }  # P(X=x, Y=y, C=c)
+            # C = 0
+            (0, 0, 0): 0.5 * 0.4 * 0.4,  # 0.08
+            (0, 1, 0): 0.5 * 0.4 * 0.6,  # 0.12
+            (1, 0, 0): 0.5 * 0.6 * 0.4,  # 0.12
+            (1, 1, 0): 0.5 * 0.6 * 0.6,  # 0.18
+
+            # C = 1
+            (0, 0, 1): 0.5 * 0.2 * 0.2,  # 0.02
+            (0, 1, 1): 0.5 * 0.2 * 0.8,  # 0.08
+            (1, 0, 1): 0.5 * 0.8 * 0.2,  # 0.08
+            (1, 1, 1): 0.5 * 0.8 * 0.8  # 0.32
+        }
 
     def is_X_Y_dependent(self):
         """
@@ -101,13 +112,12 @@ class conditional_independence():
         X = self.X
         Y = self.Y
         X_Y = self.X_Y
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        eps = 1e-8
+        for (x, y), p_xy in self.X_Y.items():
+            # if P(X,Y) != P(X)P(Y) for any (x,y), they’re dependent
+            if abs(p_xy - self.X[x] * self.Y[y]) > eps:
+                return True
+        return False
 
     def is_X_Y_given_C_independent(self):
         """
@@ -119,13 +129,26 @@ class conditional_independence():
         X_C = self.X_C
         Y_C = self.Y_C
         X_Y_C = self.X_Y_C
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        eps = 1e-8
+        for c, p_c in C.items():
+            # skip any zero‐probability conditioning events
+            if p_c <= eps:
+                continue
+
+            for x in X:
+                for y in Y:
+                    # P(X,Y|C) = P(X,Y,C)/P(C)
+                    p_xyc = X_Y_C[(x, y, c)]
+                    lhs = p_xyc / p_c
+
+                    # P(X|C)P(Y|C) = [P(X,C)/P(C)]·[P(Y,C)/P(C)]
+                    p_xc = X_C[(x, c)]
+                    p_yc = Y_C[(y, c)]
+                    rhs = (p_xc / p_c) * (p_yc / p_c)
+
+                    if abs(lhs - rhs) > eps:
+                        return False
+        return True
 
 
 def normal_pdf(x, mean, std):
@@ -168,14 +191,12 @@ class NaiveNormalClassDistribution():
         self.mean = np.mean(X_c, axis=0)
         self.std = np.std(X_c, axis=0, ddof=0)
 
-
     def get_prior(self):
         """
         Returns the prior porbability of the class, as computed from the training data.
         """
         labels = self.dataset[:, -1]
         return np.sum(labels == self.class_value) / labels.shape[0]
-
 
     def get_instance_likelihood(self, x):
         """
@@ -209,7 +230,6 @@ class MAPClassifier():
         """
         self.ccd0 = ccd0
         self.ccd1 = ccd1
-
 
     def predict(self, x):
         """
