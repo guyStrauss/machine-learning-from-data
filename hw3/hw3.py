@@ -12,6 +12,8 @@ def poisson_log_pmf(k, rate):
 
     return the log pmf value for instance k given the rate
     """
+    if isinstance(k, int):
+        return k * np.log(rate) - rate - np.log(math.factorial(k))
     factorial_vectorized = np.vectorize(math.factorial)
     const = factorial_vectorized(k)
     return np.log(np.power(rate, k) * np.exp(-rate) / const)
